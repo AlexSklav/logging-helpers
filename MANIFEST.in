@@ -1,0 +1,7 @@
+include RELEASE-VERSION
+include version.py
+include setup.py
+include paver-minilib.zip
+recursive-include logging_helpers *
+recursive-exclude logging_helpers *.pyc
+recursive-exclude logging_helpers *~
