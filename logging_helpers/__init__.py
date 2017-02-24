@@ -3,9 +3,14 @@ import logging
 
 
 @contextlib.contextmanager
-def logging_restore():
+def logging_restore(clear_handlers=False):
     '''
     Save logging state upon entering context and restore upon leaving.
+
+    Parameters
+    ----------
+    clear_handlers : bool, optional
+        If ``True``, clear active logging handlers while within context.
 
     Example
     -------
@@ -28,6 +33,9 @@ def logging_restore():
     '''
     handlers = logging.root.handlers[:]
     level = logging.root.getEffectiveLevel()
+    if clear_handlers:
+        for h in handlers:
+            logging.root.removeHandler(h)
     yield
     handlers_to_remove = logging.root.handlers[:]
     [logging.root.removeHandler(h) for h in handlers_to_remove]
