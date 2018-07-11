@@ -70,7 +70,7 @@ def caller_name(skip=2):
     An empty string is returned if skipped levels exceed stack height
 
 
-    .. versionchanged:: X.X.X
+    .. versionchanged:: v0.4
         Look up the module name from the frame globals dictionary rather than
         by calling :func:`inspect.getmodule()`.  Calling
         :func:`inspect.getmodule()` is ~1000x slower compared to looking up the
