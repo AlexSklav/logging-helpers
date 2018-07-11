@@ -71,9 +71,10 @@ def caller_name(skip=2):
 
 
     .. versionchanged:: X.X.X
-        When executing from a frozen executable, infer module name from
-        filename since :func:`inspect.getmodule` is ~20x slower (~1.5 ms vs 80
-        µs) when called from a frozen executable versus calling from source.
+        Look up the module name from the frame globals dictionary rather than
+        by calling :func:`inspect.getmodule()`.  Calling
+        :func:`inspect.getmodule()` is ~1000x slower compared to looking up the
+        module name from the globals dictionary (~80 µs vs 90 ns).
     """
     def stack_(frame):
         framelist = []
@@ -88,24 +89,13 @@ def caller_name(skip=2):
         return ''
     parentframe = stack[start]
 
-    name = []
-    if getattr(sys, 'frozen', False):
-        # Executing from a frozen executable.
+    # Look up module name from globals dictionary in frame rather than by
+    # calling `inspect.getmodule()`.  Calling `inspect.getmodule()` is ~1000x
+    # slower compared to looking up the module name from the globals dictionary
+    # (~80 µs vs 90 ns).
+    module_name = parentframe.f_globals['__name__']
+    name = [module_name]
 
-        # Infer module name from filename since `inspect.getmodule` is ~20x
-        # slower (~1.5 ms vs 80 µs) when called from a frozen executable versus
-        # calling from source.
-        filename = os.path.normpath(parentframe.f_code.co_filename)
-        path_parts = filename.split(os.sep)
-        module_name = '.'.join(path_parts[:-1] +
-                               [os.path.splitext(path_parts[-1])[0]])
-        name.append(module_name)
-    else:
-        module = inspect.getmodule(parentframe)
-        # `modname` can be None when frame is executed directly in console
-        # TODO(techtonik): consider using __main__
-        if module:
-            name.append(module.__name__)
     # detect classname
     if 'self' in parentframe.f_locals:
         # I don't know any way to detect call from the object method
@@ -115,5 +105,4 @@ def caller_name(skip=2):
     codename = parentframe.f_code.co_name
     if codename != '<module>':  # top level usually
         name.append(codename)  # function or a method
-    del parentframe
     return ".".join(name)
