@@ -1,6 +1,8 @@
+# coding: utf-8
 import contextlib
 import inspect
 import logging
+import os
 import sys
 
 
@@ -59,12 +61,19 @@ def _L(skip=0):
 # [1]: https://gist.github.com/techtonik/2151727
 # [2]: https://gist.github.com/techtonik/2151727#gistcomment-2333747
 def caller_name(skip=2):
-    """Get a name of a caller in the format module.class.method
+    """
+    Get a name of a caller in the format module.class.method
 
-       `skip` specifies how many levels of stack to skip while getting caller
-       name. skip=1 means "who calls me", skip=2 "who calls my caller" etc.
+    `skip` specifies how many levels of stack to skip while getting caller
+    name. skip=1 means "who calls me", skip=2 "who calls my caller" etc.
 
-       An empty string is returned if skipped levels exceed stack height
+    An empty string is returned if skipped levels exceed stack height
+
+
+    .. versionchanged:: X.X.X
+        When executing from a frozen executable, infer module name from
+        filename since :func:`inspect.getmodule` is ~20x slower (~1.5 ms vs 80
+        µs) when called from a frozen executable versus calling from source.
     """
     def stack_(frame):
         framelist = []
@@ -80,11 +89,23 @@ def caller_name(skip=2):
     parentframe = stack[start]
 
     name = []
-    module = inspect.getmodule(parentframe)
-    # `modname` can be None when frame is executed directly in console
-    # TODO(techtonik): consider using __main__
-    if module:
-        name.append(module.__name__)
+    if getattr(sys, 'frozen', False):
+        # Executing from a frozen executable.
+
+        # Infer module name from filename since `inspect.getmodule` is ~20x
+        # slower (~1.5 ms vs 80 µs) when called from a frozen executable versus
+        # calling from source.
+        filename = os.path.normpath(parentframe.f_code.co_filename)
+        path_parts = filename.split(os.sep)
+        module_name = '.'.join(path_parts[:-1] +
+                               [os.path.splitext(path_parts[-1])[0]])
+        name.append(module_name)
+    else:
+        module = inspect.getmodule(parentframe)
+        # `modname` can be None when frame is executed directly in console
+        # TODO(techtonik): consider using __main__
+        if module:
+            name.append(module.__name__)
     # detect classname
     if 'self' in parentframe.f_locals:
         # I don't know any way to detect call from the object method
