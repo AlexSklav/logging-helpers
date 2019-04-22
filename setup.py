@@ -1,12 +1,12 @@
 import sys
 
 import setuptools as st
+import versioneer
 
-sys.path.insert(0, '.')
-import version
 
 st.setup(name='logging-helpers',
-         version=version.getVersion(),
+         version=versioneer.get_version(),
+         cmdclass=versioneer.get_cmdclass(),
          description='Add description here.',
          keywords='',
          author='Christian Fobel',
@@ -14,6 +14,5 @@ st.setup(name='logging-helpers',
          url='https://github.com/wheeler-microfluidics/logging-helpers',
          license='BSD',
          packages=['logging_helpers'],
-         install_requires=['path-helpers'],
          # Install data listed in `MANIFEST.in`
          include_package_data=True)

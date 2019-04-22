@@ -1,6 +1,6 @@
-include RELEASE-VERSION
-include version.py
 include setup.py
 recursive-include logging_helpers *
 recursive-exclude logging_helpers *.pyc
 recursive-exclude logging_helpers *~
+include versioneer.py
+include logging_helpers/_version.py

@@ -5,6 +5,10 @@ import logging
 import os
 import sys
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 
 @contextlib.contextmanager
 def logging_restore(clear_handlers=False):
