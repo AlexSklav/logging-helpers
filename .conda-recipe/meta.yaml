@@ -21,7 +21,12 @@ build:
 
 requirements:
   build:
-    - python
+    - python {{ python }}
+    - versioneer
 
   run:
-    - python
+    - python {{ python }}
+
+test:
+  imports:
+    - logging_helpers
