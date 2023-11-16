@@ -6,7 +6,7 @@ import versioneer
 setup(name='logging-helpers',
       version=versioneer.get_version(),
       cmdclass=versioneer.get_cmdclass(),
-      description='Add description here.',
+      description='Helper functions, etc. for the Python `logging` module.',
       keywords='',
       author='Christian Fobel',
       author_email='christian@fobel.net',

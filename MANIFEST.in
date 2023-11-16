@@ -2,5 +2,7 @@ include setup.py
 recursive-include logging_helpers *
 recursive-exclude logging_helpers *.pyc
 recursive-exclude logging_helpers *~
+exclude .DS_Store
+recursive-exclude logging_helpers .DS_Store
 include versioneer.py
 include logging_helpers/_version.py

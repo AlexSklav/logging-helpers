@@ -3,13 +3,10 @@
 {% else %}
 {% set GIT_VERSION = GIT_DESCRIBE_TAG[1:] %}
 {% endif %}
-# source will be downloaded prior to filling in jinja templates
-# Example assumes that this folder has setup.py in it
-source:
-  git_url: ../
-
+{% set PKG_NAME = 'logging-helpers' %}
+{% set MODULE_NAME = PKG_NAME.replace('-', '_') %}
 package:
-  name: logging-helpers
+  name: {{ PKG_NAME }}
   version: {{ GIT_VERSION }}
 
 build:
@@ -21,12 +18,27 @@ build:
 
 requirements:
   build:
-    - python {{ python }}
+    - python >=3.8
+    - pandas
+    - path-helpers
     - versioneer
 
   run:
-    - python {{ python }}
+    - python >=3.8
+    - pandas
+    - path-helpers
 
 test:
   imports:
-    - logging_helpers
+    - {{ MODULE_NAME }}
+
+about:
+  home: https://github.com/sci-bots/{{ PKG_NAME }}
+  summary: Helper functions, etc. for the Python `logging` module.
+  license: BSD
+
+# source will be downloaded prior to filling in jinja templates
+# Example assumes that this folder has setup.py in it
+source:
+#  git_url: ../
+  path: ..
