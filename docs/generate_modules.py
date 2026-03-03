@@ -27,7 +27,7 @@ It also creates a modules index (named modules.<suffix>).
 
 
 import os
-import optparse
+from argparse import ArgumentParser
 
 
 # automodule options
@@ -54,11 +54,11 @@ def write_file(name, text, opts):
     """Write the output file for module/package <name>."""
     if opts.dryrun:
         return
-    fname = os.path.join(opts.destdir, "%s.%s" % (name, opts.suffix))
+    fname = os.path.join(opts.destdir, f"{name}.{opts.suffix}")
     if not opts.force and os.path.isfile(fname):
-        print 'File %s already exists, skipping.' % fname
+        print(f'File {fname} already exists, skipping.')
     else:
-        print 'Creating file %s.' % fname
+        print(f'Creating file {fname}.')
         f = open(fname, 'w')
         f.write(text)
         f.close()
@@ -66,26 +66,26 @@ def write_file(name, text, opts):
 def format_heading(level, text):
     """Create a heading of <level> [1, 2 or 3 supported]."""
     underlining = ['=', '-', '~', ][level-1] * len(text)
-    return '%s\n%s\n\n' % (text, underlining)
+    return f'{text}\n{underlining}\n\n'
 
 def format_directive(module, package=None):
     """Create the automodule directive and add the options."""
-    directive = '.. automodule:: %s\n' % makename(package, module)
+    directive = f'.. automodule:: {makename(package, module)}\n'
     for option in OPTIONS:
-        directive += '    :%s:\n' % option
+        directive += f'    :{option}:\n'
     return directive
 
 def create_module_file(package, module, opts):
     """Build the text of the file and write the file."""
-    text = format_heading(1, '%s Module' % module)
-    text += format_heading(2, ':mod:`%s` Module' % module)
+    text = format_heading(1, f'{module} Module')
+    text += format_heading(2, f':mod:`{module}` Module')
     text += format_directive(module, package)
     write_file(makename(package, module), text, opts)
 
 def create_package_file(root, master_package, subroot, py_files, opts, subs):
     """Build the text of the file and write the file."""
     package = os.path.split(root)[-1]
-    text = format_heading(1, '%s Package' % package)
+    text = format_heading(1, f'{package} Package')
     # add each package's module
     for py_file in py_files:
         if shall_skip(os.path.join(root, py_file)):
@@ -94,9 +94,9 @@ def create_package_file(root, master_package, subroot, py_files, opts, subs):
         py_file = os.path.splitext(py_file)[0]
         py_path = makename(subroot, py_file)
         if is_package:
-            heading = ':mod:`%s` Package' % package
+            heading = f':mod:`{package}` Package'
         else:
-            heading = ':mod:`%s` Module' % py_file
+            heading = f':mod:`{py_file}` Module'
         text += format_heading(2, heading)
         text += format_directive(is_package and subroot or py_path, master_package)
         text += '\n'
@@ -108,7 +108,7 @@ def create_package_file(root, master_package, subroot, py_files, opts, subs):
         text += format_heading(2, 'Subpackages')
         text += '.. toctree::\n\n'
         for sub in subs:
-            text += '    %s.%s\n' % (makename(master_package, subroot), sub)
+            text += f'    {makename(master_package, subroot)}.{sub}\n'
         text += '\n'
 
     write_file(makename(master_package, subroot), text, opts)
@@ -117,9 +117,9 @@ def create_modules_toc_file(master_package, modules, opts, name='modules'):
     """
     Create the module's index.
     """
-    text = format_heading(1, '%s Modules' % opts.header)
+    text = format_heading(1, f'{opts.header} Modules')
     text += '.. toctree::\n'
-    text += '   :maxdepth: %s\n\n' % opts.maxdepth
+    text += f'   :maxdepth: {opts.maxdepth}\n\n'
 
     modules.sort()
     prev_module = ''
@@ -128,7 +128,7 @@ def create_modules_toc_file(master_package, modules, opts, name='modules'):
         if module.startswith(prev_module + '.'):
             continue
         prev_module = module
-        text += '   %s\n' % module
+        text += f'   {module}\n'
 
     write_file(name, text, opts)
 
@@ -231,32 +231,30 @@ def main():
     """
     Parse and check the command line arguments.
     """
-    parser = optparse.OptionParser(usage="""usage: %prog [options] <package path> [exclude paths, ...]
-
-Note: By default this script will not overwrite already created files.""")
-    parser.add_option("-n", "--doc-header", action="store", dest="header", help="Documentation Header (default=Project)", default="Project")
-    parser.add_option("-d", "--dest-dir", action="store", dest="destdir", help="Output destination directory", default="")
-    parser.add_option("-s", "--suffix", action="store", dest="suffix", help="module suffix (default=txt)", default="txt")
-    parser.add_option("-m", "--maxdepth", action="store", dest="maxdepth", help="Maximum depth of submodules to show in the TOC (default=4)", type="int", default=4)
-    parser.add_option("-r", "--dry-run", action="store_true", dest="dryrun", help="Run the script without creating the files")
-    parser.add_option("-f", "--force", action="store_true", dest="force", help="Overwrite all the files")
-    parser.add_option("-t", "--no-toc", action="store_true", dest="notoc", help="Don't create the table of content file")
-    (opts, args) = parser.parse_args()
-    if not args:
-        parser.error("package path is required.")
-    else:
-        rootpath, excludes = args[0], args[1:]
-        if os.path.isdir(rootpath):
-            # check if the output destination is a valid directory
-            if opts.destdir and os.path.isdir(opts.destdir):
-                excludes = normalize_excludes(rootpath, excludes)
-                recurse_tree(rootpath, excludes, opts)
-            else:
-                print '%s is not a valid output destination directory.' % opts.destdir
+    parser = ArgumentParser(description='Generate Sphinx autodoc module files.',
+                            usage='%(prog)s [options] <package path> [exclude paths, ...]')
+    parser.add_argument("rootpath", help="Package path")
+    parser.add_argument("excludes", nargs='*', help="Paths to exclude")
+    parser.add_argument("-n", "--doc-header", dest="header", help="Documentation Header (default=Project)", default="Project")
+    parser.add_argument("-d", "--dest-dir", dest="destdir", help="Output destination directory", default="")
+    parser.add_argument("-s", "--suffix", dest="suffix", help="module suffix (default=txt)", default="txt")
+    parser.add_argument("-m", "--maxdepth", dest="maxdepth", help="Maximum depth of submodules to show in the TOC (default=4)", type=int, default=4)
+    parser.add_argument("-r", "--dry-run", action="store_true", dest="dryrun", help="Run the script without creating the files")
+    parser.add_argument("-f", "--force", action="store_true", dest="force", help="Overwrite all the files")
+    parser.add_argument("-t", "--no-toc", action="store_true", dest="notoc", help="Don't create the table of content file")
+    args = parser.parse_args()
+    rootpath = args.rootpath
+    excludes = args.excludes
+    if os.path.isdir(rootpath):
+        # check if the output destination is a valid directory
+        if args.destdir and os.path.isdir(args.destdir):
+            excludes = normalize_excludes(rootpath, excludes)
+            recurse_tree(rootpath, excludes, args)
         else:
-            print '%s is not a valid directory.' % rootpath
+            print(f'{args.destdir} is not a valid output destination directory.')
+    else:
+        print(f'{rootpath} is not a valid directory.')
 
 
 if __name__ == '__main__':
     main()
-
